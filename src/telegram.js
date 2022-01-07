@@ -9,17 +9,17 @@ class Telegram {
     };
   }
 
-  sendText(text) {
+  sendText(chat_id, text) {
     let url = new URL(`${this.baseUrl}/sendMessage`);
-    url.searchParams.set('chat_id', this.message.chat_id);
+    url.searchParams.set('chat_id', chat_id);
     url.searchParams.set('parse_mode', 'markdown');
     url.searchParams.set('text', text);
     return fetch(url, this.header);
   }
 
-  sendPhoto(photo) {
+  sendPhoto(chat_id, photo) {
     let url = new URL(`${this.baseUrl}/sendPhoto`);
-    url.searchParams.set('chat_id', this.message.chat_id);
+    url.searchParams.set('chat_id', chat_id);
 
     if (photo.caption) {
       url.searchParams.set('caption', photo.caption);
@@ -28,9 +28,9 @@ class Telegram {
     return fetch(url, this.header);
   }
 
-  sendVideo(video) {
+  sendVideo(chat_id, video) {
     let url = new URL(`${this.baseUrl}/sendVideo`);
-    url.searchParams.set('chat_id', this.message.chat_id);
+    url.searchParams.set('chat_id', chat_id);
 
     if (video.caption) {
       url.searchParams.set('caption', video.caption);
