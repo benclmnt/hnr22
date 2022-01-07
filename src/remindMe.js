@@ -2,6 +2,11 @@ import Telegram from './telegram';
 import * as chrono from 'chrono-node';
 import dayjs from 'dayjs';
 
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone'; // dependent on utc plugin
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const bot = new Telegram(BOT_TOKEN);
 
 export const sendReminderHandler = async () => {
@@ -31,7 +36,9 @@ export const sendReminderHandler = async () => {
         bot.sendText(
           chat_id,
           [
-            dayjs(new Date(ts * 60 * 1000)).format('dddd, D MMM YYYY HH:mm'),
+            dayjs(new Date(ts * 60 * 1000))
+              .tz('Asia/Singapore')
+              .format('dddd, D MMM YYYY HH:mm'),
             ...v,
           ].join('\n- ')
         );
