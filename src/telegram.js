@@ -1,8 +1,7 @@
 class Telegram {
   constructor(token, message) {
-    this.token = token;
     this.message = message;
-    this.telegramUrl = 'https://api.telegram.org/bot' + this.token;
+    this.baseUrl = `https://api.telegram.org/bot${token}`;
     this.header = {
       headers: {
         'content-type': 'application/json;charset=UTF-8',
@@ -11,64 +10,38 @@ class Telegram {
   }
 
   sendText(text) {
-    this.text = text;
-    let postUrl =
-      this.telegramUrl +
-      '/sendMessage?chat_id=' +
-      this.message.id +
-      '&parse_mode=markdown&text=' +
-      this.text;
-    let res = fetch(postUrl, this.header);
-
-    return res;
-  }
-
-  sendAnimation(animation) {
-    this.animation = animation;
-    let postUrl =
-      this.telegramUrl + '/sendAnimation?chat_id=' + this.message.id;
-
-    if (this.animation.caption) {
-      postUrl += '&caption=' + this.animation.caption;
-    }
-    postUrl += '&animation=' + this.animation.url;
-    let res = fetch(postUrl, this.header);
-
-    return res;
+    let url = new URL(`${this.baseUrl}/sendMessage`);
+    url.searchParams.set('chat_id', this.message.chat_id);
+    url.searchParams.set('parse_mode', 'markdown');
+    url.searchParams.set('text', text);
+    return fetch(url, this.header);
   }
 
   sendPhoto(photo) {
-    this.photo = photo;
-    let postUrl = this.telegramUrl + '/sendPhoto?chat_id=' + this.message.id;
+    let url = new URL(`${this.baseUrl}/sendPhoto`);
+    url.searchParams.set('chat_id', this.message.chat_id);
 
-    if (this.photo.caption) {
-      postUrl += '&caption=' + this.photo.caption;
+    if (photo.caption) {
+      url.searchParams.set('caption', photo.caption);
     }
-    postUrl += '&photo=' + this.photo.url;
-    let res = fetch(postUrl, this.header);
-
-    return res;
+    url.searchParams.set('photo', photo.url);
+    return fetch(url, this.header);
   }
 
   sendVideo(video) {
-    this.video = video;
-    let postUrl = this.telegramUrl + '/sendVideo?chat_id=' + this.message.id;
+    let url = new URL(`${this.baseUrl}/sendVideo`);
+    url.searchParams.set('chat_id', this.message.chat_id);
 
-    if (this.video.caption) {
-      postUrl += '&caption=' + this.video.url;
+    if (video.caption) {
+      url.searchParams.set('caption', video.caption);
     }
-
-    postUrl += '&video=' + this.photo;
-    let res = fetch(postUrl, this.header);
-
-    return res;
+    url.searchParams.set('video', video.url);
+    return fetch(url, this.header);
   }
 
   getUpdate() {
     let postUrl = this.telegramUrl + '/getUpdates';
-    let res = fetch(postUrl, this.header);
-
-    return res;
+    return fetch(postUrl, this.header);
   }
 }
 

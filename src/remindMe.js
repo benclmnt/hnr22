@@ -1,11 +1,11 @@
 import Telegram from './telegram';
 
-export default async (request) => {
+export default async (req) => {
   try {
-    const body = await request.json();
+    const body = await req.json();
 
     const MESSAGE = {
-      id: body.message.chat.id,
+      chat_id: body.message.chat.id,
       message_id: body.message.message_id,
       first_name: body.message.chat.first_name,
       last_name: body.message.chat.last_name,
