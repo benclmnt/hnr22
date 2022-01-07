@@ -57,6 +57,21 @@ export default async (req) => {
       };
       bot.sendPhoto(MESSAGE.chat_id, media);
       return RETURN_OK;
+    } else if (MESSAGE.text.startsWith('/list')) {
+      // let data = await HNR22_KV.list();
+      // log(data);
+      // data = JSON.parse(data);
+      // log(data);
+
+      // let result = [];
+      // for (let [ts, v] of Object.entries(data)) {
+      //   if (MESSAGE.chat_id in v) {
+      //     result = result.concat(v[MESSAGE.chat_id]);
+      //   }
+      // }
+      // log(result);
+      bot.sendText(MESSAGE.chat_id, 'CURRENTLY NOT SUPPORTED!');
+      return RETURN_OK;
     }
 
     const parseResults = chrono.parse(
