@@ -1,9 +1,11 @@
-import remindMe from './src/remindMe';
+import { remindMeHandler, sendReminderHandler } from './src/remindMe';
+import Telegram from './src/telegram';
 import { Router } from 'itty-router';
 
 const router = Router();
 
-router.post('/remindMe', remindMe);
+router.post('/remindMe', remindMeHandler);
+router.get('/sendReminder', sendReminderHandler);
 
 router.all('*', () => new Response('Not Found.', { status: 404 }));
 

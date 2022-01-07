@@ -1,6 +1,5 @@
 class Telegram {
-  constructor(token, message) {
-    this.message = message;
+  constructor(token) {
     this.baseUrl = `https://api.telegram.org/bot${token}`;
     this.header = {
       headers: {

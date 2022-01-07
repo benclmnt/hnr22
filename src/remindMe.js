@@ -1,7 +1,52 @@
 import Telegram from './telegram';
 import * as chrono from 'chrono-node';
+import dayjs from 'dayjs';
 
-export default async (req) => {
+const bot = new Telegram(BOT_TOKEN);
+
+export const sendReminderHandler = async () => {
+  const headers = new Headers({
+    'content-type': 'application/json;charset=UTF-8',
+  });
+  const RETURN_FORBIDDEN = new Response('Oops...', {
+    status: 403,
+    statusText: 'Forbidden',
+  });
+  const RETURN_OK = new Response('working', {
+    status: 200,
+    headers: headers,
+  });
+
+  try {
+    const ts = Math.floor(Date.now() / (60 * 1000)); // keys are rounded to its nearest minute
+
+    let reminders = await HNR22_KV.get(ts);
+
+    if (reminders) {
+      reminders = JSON.parse(reminders);
+      log(reminders);
+
+      for (let [chat_id, v] of Object.entries(reminders)) {
+        console.log(`sending reminder to ${chat_id}`);
+        bot.sendText(
+          chat_id,
+          [
+            dayjs(new Date(ts * 60 * 1000)).format('dddd, D MMM YYYY HH:mm'),
+            ...v,
+          ].join('\n- ')
+        );
+      }
+    } else {
+      console.log(`no reminders at ${ts * 60}`);
+    }
+
+    return RETURN_OK;
+  } catch (err) {
+    return new Response(err.stack || err);
+  }
+};
+
+export const remindMeHandler = async (req) => {
   const headers = new Headers({
     'content-type': 'application/json;charset=UTF-8',
   });
@@ -18,21 +63,21 @@ export default async (req) => {
     const body = await req.json();
     console.log(body);
 
-    const MESSAGE = {
-      date: body.message.date,
-      id: `${body.message.chat.id}_${body.message.message_id}`,
-      chat_id: body.message.chat.id,
-      message_id: body.message.message_id,
-      first_name: body.message.chat.first_name,
-      last_name: body.message.chat.last_name,
-      text: body.message.text.toLowerCase(),
-    };
+    const msg = body.message;
 
-    const bot = new Telegram(BOT_TOKEN, MESSAGE);
+    const MESSAGE = {
+      date: msg.date,
+      id: `${msg.chat.id}_${msg.message_id}`,
+      chat_id: msg.chat.id,
+      message_id: msg.message_id,
+      first_name: msg.chat.first_name,
+      last_name: msg.chat.last_name,
+      text: msg.text.toLowerCase(),
+    };
 
     /******************************/
     /****** pseudo-security *******/
-    // if (!ALLOWED_GROUPS.includes(MESSAGE.id)) {
+    // if (!ALLOWED_GROUPS.includes(MESSAGE.message_id)) {
     //   bot.sendText("Sorry, I can't talk to strangers");
     //   return RETURN_OK;
     // }
@@ -42,13 +87,6 @@ export default async (req) => {
     // commands
     if (MESSAGE.text.startsWith('/start')) {
       bot.sendText(MESSAGE.chat_id, 'Hey!');
-      return RETURN_OK;
-    } else if (MESSAGE.text.startsWith('/help')) {
-      let media = {
-        caption: 'Maybe this can help you...',
-        url: 'https://media.giphy.com/media/pYw2Mmqkncj2E/giphy.gif',
-      };
-      bot.sendPhoto(MESSAGE.chat_id, media);
       return RETURN_OK;
     } else if (MESSAGE.text.startsWith('/hey')) {
       let media = {
@@ -86,20 +124,18 @@ export default async (req) => {
     );
 
     if (parseResults.length < 1) {
-      console.log('No date found');
+      console.log('No date found. skipping...');
       return RETURN_OK;
     }
 
     const startDate = parseResults[0].start.date();
-    const unixTs = convertToNearestMinute(
-      Math.round(startDate.getTime() / 1000)
-    );
+    const unixMin = convertToNearestMinute(startDate.getTime());
 
     log(parseResults);
     log(startDate.toString());
 
     let reminders;
-    const cache = await HNR22_KV.get(unixTs);
+    const cache = await HNR22_KV.get(unixMin);
     if (!cache) {
       reminders = {};
     } else {
@@ -108,11 +144,16 @@ export default async (req) => {
 
     reminders[MESSAGE.chat_id] = [
       ...(reminders[MESSAGE.chat_id] || []),
-      `test_${MESSAGE.id}`,
+      MESSAGE.text
+        .replace(parseResults[0].text, '')
+        .replace(/\s+/g, ' ')
+        .replace(/^\s+|\s+$/gm, ''),
     ];
     log({ reminders });
 
-    await HNR22_KV.put(unixTs, JSON.stringify(reminders));
+    await HNR22_KV.put(unixMin, JSON.stringify(reminders), {
+      expiration: (unixMin + 3) * 60, // expired 3 minutes after the scheduled reminder
+    });
 
     return RETURN_OK;
   } catch (err) {
@@ -121,7 +162,7 @@ export default async (req) => {
 };
 
 function convertToNearestMinute(unixTs) {
-  return Math.round(unixTs / 60.0) * 60;
+  return Math.floor(unixTs / (60 * 1000));
 }
 
-const log = (obj) => console.dir(JSON.stringify(obj, null, 4));
+const log = (obj) => console.log(JSON.stringify(obj, null, 4));
