@@ -1,0 +1,7 @@
+.envrc
+
+wrangler.toml
+
+/dist
+worker/
+node_modules/

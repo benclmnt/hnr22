@@ -1,0 +1,8 @@
+name = "hnr22"
+type = "webpack"
+route = ''
+account_id = ''
+usage_model = ''
+compatibility_flags = []
+workers_dev = true
+compatibility_date = "2022-01-07"
